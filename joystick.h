@@ -69,6 +69,9 @@ struct joystick {
     
     /* modes pwm mapping */
     uint16_t mode_pwms[JOYSTICK_NUM_MODES];
+
+    /* power button (if available) */
+    int16_t power_button;
 };
 
 int joystick_start(char *path, struct joystick *joystick);

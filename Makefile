@@ -2,7 +2,8 @@
 
 PREFIX  ?=/
 INSTALL = install
-CC	= gcc
+CC	= arm-linux-gnueabihf-gcc
+STRIP	= arm-linux-gnueabihf-strip
 CFLAGS	= -g -Wall -Wextra -O3
 HEADERS = joystick_remote.h remote.h joystick.h
 LIBS	= -lpthread
@@ -17,6 +18,7 @@ all: $(PROGRAM)
 
 $(PROGRAM) : $(OBJS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
+	$(STRIP) $@
 
 clean:
 	-rm -f $(OBJS) $(PROGRAM) *~

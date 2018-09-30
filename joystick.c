@@ -34,11 +34,16 @@
 #include "joystick_remote.h"
 
 static uint8_t skycontroller_buttons[JOYSTICK_NUM_MODES] = { 8, 9, 2, 0, 1, 3};
+static uint8_t skyctrl2_buttons[JOYSTICK_NUM_MODES] = { 0, 1, 3, 4, 6, 5}; // Wheel, Home, B, A, TrigLeft, TrigRight
+                                                                           // 2=Takeoff, 7=Power(long press), 8=StickLeftPress, 9=StickRightPress
 static uint8_t xbox360_buttons[JOYSTICK_NUM_MODES] = { 0, 1, 2, 3, 4, 5};
 static uint8_t ps3_buttons[JOYSTICK_NUM_MODES] = { 0, 1, 2, 3, 5, 4};
-static struct joystick_axis skycontroller_axes[JOYSTICK_NUM_AXIS] = {{2, 1}, {3, -1}, {1, -1}, {0, 1}};
+static struct joystick_axis skycontroller_axes[JOYSTICK_NUM_AXIS] = {{2, 1}, {3, -1}, {1, -1}, {0, 1}}; // 4=CameraPitch
+static struct joystick_axis skyctrl2_axes[JOYSTICK_NUM_AXIS] = {{2, 1}, {3, -1}, {1, 1}, {0, 1}};
 static struct joystick_axis xbox360_axes[JOYSTICK_NUM_AXIS] = {{3, 1}, {4, 1}, {1, -1}, {0, 1}};
 static struct joystick_axis ps3_axes[JOYSTICK_NUM_AXIS] = { {2, 1}, {3, -1}, {1, -1}, {0, 1}};
+
+#define SKYCTRL2_POWER_BTN 7
 
 #define JOYSTICK_AXIS_MIN -32767.0f
 #define JOYSTICK_AXIS_MAX  32767.0f
@@ -93,6 +98,12 @@ static void joystick_handle_button(struct joystick *joystick,
     /* only take button presses into account */
     if (value != 1)
         goto end;
+
+    if (joystick->power_button >=0 && number == joystick->power_button) {
+        pthread_mutex_unlock(&joystick->mutex);
+        system("/sbin/poweroff");
+        return;
+    }
 
     if (number == joystick->buttons[JOYSTICK_BUTTON_MODE1]) {
         joystick->pwms.mode = mode_pwm_values[JOYSTICK_BUTTON_MODE1];
@@ -236,12 +247,17 @@ int joystick_set_type(struct joystick *joystick, char *type)
     int ret = 0;
 
     pthread_mutex_lock(&joystick->mutex);
+    joystick->power_button = -1;
     if (!strcmp(type, "x") || !strcmp(type, "xbox360")) {
         memcpy(&joystick->buttons, xbox360_buttons, sizeof(joystick->buttons));
         memcpy(&joystick->axes, xbox360_axes, sizeof(joystick->axes));
     } else if (!strcmp(type, "s") || !strcmp(type, "skycontroller")) {
         memcpy(&joystick->buttons, skycontroller_buttons, sizeof(joystick->buttons));
         memcpy(&joystick->axes, skycontroller_axes, sizeof(joystick->axes));
+    } else if (!strcmp(type, "s2") || !strcmp(type, "skyctrl2")) {
+        memcpy(&joystick->buttons, skyctrl2_buttons, sizeof(joystick->buttons));
+        memcpy(&joystick->axes, skyctrl2_axes, sizeof(joystick->axes));
+        joystick->power_button = SKYCTRL2_POWER_BTN;
     } else if (!strcmp(type, "ps3") || !strcmp(type, "playstation3")) {
         memcpy(&joystick->buttons, ps3_buttons, sizeof(joystick->buttons));
         memcpy(&joystick->axes, ps3_axes, sizeof(joystick->axes));

@@ -52,7 +52,7 @@ static struct remote remote;
 
 static const char usage[] = "usage:\n\tjoystick_remote -d your_device "
                             "-t joystick_type -r remote_address:remote_port\n\n"
-                            "\tjoystick types: xbox360, skycontroller and ps3\n\n";
+                            "\tjoystick types: xbox360, skycontroller, skyctrl2 and ps3\n\n";
 static uint8_t verbose = 0;
 
 void debug_printf(const char *fmt, ...)
